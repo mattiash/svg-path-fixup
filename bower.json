@@ -1,0 +1,18 @@
+{
+  "name": "svg-path-fixup",
+  "version": "0.1",
+  "authors": [
+    "Mattias Holmlund <mattias.git@holmlund.se>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.2.14"
+  }
+}

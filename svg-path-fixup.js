@@ -3,7 +3,7 @@
 // m X Y at start means something special. Always add M 0 0 at top!
     
 angular.module("SvgPathFixup", [])
-.controller("Ctrl", function($scope) {
+    .controller("Ctrl", function($scope, PathList) {
         $scope.symbol = {
             path: "",
             pathexpr: "M0,0 L50,50"
@@ -11,32 +11,38 @@ angular.module("SvgPathFixup", [])
         $scope.dx = 1;
 
         $scope.$watch( 'symbol.pathexpr', function(newVal) {
-            $scope.symbol.path = pl_to_string(parse_pathexpr(newVal)).replace("\n", " ");
+            $scope.symbol.path = pl_to_string(PathList.parse(newVal)).replace("\n", " ");
         });
 
         $scope.pretty = function() {
-            $scope.symbol.pathexpr = pl_to_string(parse_pathexpr($scope.symbol.pathexpr))
+            $scope.symbol.pathexpr = PathList.d(PathList.parse($scope.symbol.pathexpr))
                 .replace(/([MmZzLlHhVvCcSsQqTtAa])/g, "\n$1");
         };
 
         $scope.x_inc = function() {
             var pl = parse_pathexpr($scope.symbol.pathexpr);
             var new_pl = move_x(pl, $scope.dx);
-            $scope.symbol.pathexpr = pl_to_string(new_pl);
+            $scope.symbol.pathexpr = PathList.d(new_pl);
         };
 
         $scope.x_dec = function () {
             var pl = parse_pathexpr($scope.symbol.pathexpr);
             var new_pl = move_x(pl, 0-parseFloat($scope.dx));
-            $scope.symbol.pathexpr = pl_to_string(new_pl);
+            $scope.symbol.pathexpr = PathList.d(new_pl);
         };
 
         $scope.to_relative = function () {
             var pl = parse_pathexpr($scope.symbol.pathexpr);
             var new_pl = to_relative(pl);
-            $scope.symbol.pathexpr = pl_to_string(new_pl);
+            $scope.symbol.pathexpr = PathList.d(new_pl);
         };
 
+    })
+    .service("PathList", function() {
+        return {
+            parse: parse_pathexpr,
+            d: pl_to_string
+        }
     });
 
 function parse_pathexpr(pathexpr) {

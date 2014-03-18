@@ -1,0 +1,19 @@
+{
+  "name": "svg-path-fixup",
+  "version": "0.0.0",
+  "description": "",
+  "main": "svg-path-fixup.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "for.holmlund.se:development/svg-path-fixup"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "karma-jasmine": "~0.1.5",
+    "karma": "~0.12.1"
+  }
+}

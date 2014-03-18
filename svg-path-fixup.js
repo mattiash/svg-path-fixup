@@ -9,147 +9,219 @@ angular.module("SvgPathFixup", [])
             pathexpr: "M0,0 L50,50"
         };
         $scope.dx = 1;
+        $scope.dy = 1;
 
         $scope.$watch( 'symbol.pathexpr', function(newVal) {
-            $scope.symbol.path = pl_to_string(PathList.parse(newVal)).replace("\n", " ");
+            if(newVal)
+                $scope.symbol.path = PathList.d(PathList.parse(newVal)).replace("\n", " ");
         });
 
         $scope.pretty = function() {
-            $scope.symbol.pathexpr = PathList.d(PathList.parse($scope.symbol.pathexpr))
-                .replace(/([MmZzLlHhVvCcSsQqTtAa])/g, "\n$1");
+            $scope.symbol.pathexpr = PathList.pretty(PathList.parse($scope.symbol.pathexpr));
         };
 
         $scope.x_inc = function() {
-            var pl = parse_pathexpr($scope.symbol.pathexpr);
-            var new_pl = move_x(pl, $scope.dx);
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.move_x(pl, parseFloat($scope.dx));
             $scope.symbol.pathexpr = PathList.d(new_pl);
         };
 
         $scope.x_dec = function () {
-            var pl = parse_pathexpr($scope.symbol.pathexpr);
-            var new_pl = move_x(pl, 0-parseFloat($scope.dx));
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.move_x(pl, 0-parseFloat($scope.dx));
+            $scope.symbol.pathexpr = PathList.d(new_pl);
+        };
+
+        $scope.y_inc = function () {
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.move_y(pl, parseFloat($scope.dy));
+            $scope.symbol.pathexpr = PathList.d(new_pl);
+        };
+
+        $scope.y_dec = function () {
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.move_y(pl, 0 - parseFloat($scope.dy));
             $scope.symbol.pathexpr = PathList.d(new_pl);
         };
 
         $scope.to_relative = function () {
-            var pl = parse_pathexpr($scope.symbol.pathexpr);
-            var new_pl = to_relative(pl);
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.to_relative(pl);
             $scope.symbol.pathexpr = PathList.d(new_pl);
         };
 
     })
     .service("PathList", function() {
-        return {
-            parse: parse_pathexpr,
-            d: pl_to_string
-        }
-    });
+        var PathList = {};
 
-function parse_pathexpr(pathexpr) {
-    var pl = [];
-    pathexpr.split("\n").map(function(p) {
-        p = p.trim();
-        if(p.match(/^#/)) {
-            return;
-        }
-        if(p.match(/^$/)) {
-            return;
-        }
+        PathList.parse = function(pathexpr) {
+            var pl = [];
+            pathexpr.split(/(?=[MmZzLlHhVvCcSsQqTtAa])/).map(function (p) {
+                p = p.trim();
+                if (p.match(/^#/)) {
+                    return;
+                }
+                if (p.match(/^$/)) {
+                    return;
+                }
 
-        var tokens = p.trim().replace(/^([MmZzLlHhVvCcSsQqTtAa])/, "$1 ").split(/[, ]+/);
-        console.log(tokens[0]);
-        if(tokens[0].match(/[Cc]/)){
-            while(tokens.length > 1) {
-                pl.push( [tokens[0]].concat(tokens.splice(1,6)));
+                var tokens = p.replace(/^([MmZzLlHhVvCcSsQqTtAa])/, "$1 ").trim().split(/[, ]+/);
+                tokens = tokens.map(function (v, i) {
+                    if (i === 0) {
+                        return v;
+                    }
+                    else {
+                        return parseFloat(v);
+                    }
+                });
+                if (tokens[0].match(/[Cc]/)) {
+                    while (tokens.length > 1) {
+                        pl.push([tokens[0]].concat(tokens.splice(1, 6)));
+                    }
+                }
+                else if (tokens[0].match(/[LlMm]/)) {
+                    while (tokens.length > 1) {
+                        pl.push([tokens[0]].concat(tokens.splice(1, 2)));
+                    }
+                }
+                else {
+                    pl.push(tokens);
+                }
+            });
+            return pl;
+        };
+
+        PathList.d = function (pl) {
+            var result = "";
+            pl.map(function (p) {
+                result += p.join(" ") + " ";
+            });
+            return result;
+        };
+
+        PathList.pretty = function(pl) {
+            return PathList.d(pl).replace(/\s*([MmZzLlHhVvCcSsQqTtAa])/g, "\n$1").trim()
+        };
+
+        PathList.move_x = function(pl, dx) {
+            return pl.map(
+                function (p) {
+                    return p_move_x(p, dx)
+                });
+        };
+
+        function p_move_x(p, dx) {
+            var op = p[0];
+
+            if (op === "M" || op === "L" || op === "C") {
+                p = p.map(function (v, i) {
+                    if (i % 2 === 1) {
+                        return parseFloat(v) + parseFloat(dx);
+                    }
+                    return v;
+                })
             }
-        }
-        else {
-            pl.push(tokens);
-        }
-    } );
-    return pl;
-}
-
-function move_x(pl, dx) {
-    return pl.map(
-        function (p) {
-            return p_move_x(p, dx)
-        });
-}
-
-function p_move_x(p, dx) {
-    var op = p[0];
-
-    if(op === "M" || op === "L" || op === "C" ) {
-        p = p.map(function(v,i) {
-           if(i % 2 === 1) {
-               return parseFloat(v)+parseFloat(dx);
-           }
-           return v;
-        })
-    }
-    else if( op === "m" || op === "l" || op === "c") {}
-    else {
-        console.log( "Unknown operator " + p[0]);
-    }
-    return p;
-}
-
-function to_relative(pl) {
-    var cursor = {x: 0, y: 0};
-    return pl.map(
-        function (p) {
-            return p_to_relative(cursor, p)
-        });
-}
-
-function p_to_relative(cursor, p) {
-    var op = p[0];
-
-    if (op === "M" || op === "L" ) {
-        p = p.map(function (v, i) {
-            if (i == 0) {
-                return v.toLowerCase();
-            }
-            else {
-                v = parseFloat(v);
-            }
-            if( i % 2 === 1 ) {
-                // X
-                v = v - cursor.x;
-                cursor.x = cursor.x + v;
+            else if (op.match(/[mlcZz]/)) {
             }
             else {
-                // Y
-                v = v - cursor.y;
-                cursor.y = cursor.y + v;
+                console.log("Unknown operator " + p[0]);
             }
-            return v;
-        })
-    }
-    else if( op === "C" ) {
-        p[0] = "c";
-        p[1] = p[1] - cursor.x;
-        p[2] = p[2] - cursor.y;
-        p[3] = p[3] - cursor.x;
-        p[4] = p[4] - cursor.y;
-        p[5] = p[5] - cursor.x;
-        p[6] = p[6] - cursor.y;
-        cursor.x = cursor.x + p[5];
-        cursor.y = cursor.y + p[6];
-    }
-    else if (op === "m" || op === "l" || op === "c") {
-    }
-    else {
-        console.log("Unknown operator " + p[0]);
-    }
-    return p;
-}
+            return p;
+        }
 
-function pl_to_string(pl) {
-    var result = "";
-    pl.map(function (p) {
-        result += p.join(" ") + "\n";
+        PathList.move_y = function (pl, dy) {
+            return pl.map(
+                function (p) {
+                    return p_move_y(p, dy)
+                });
+        };
+
+        function p_move_y(p, dy) {
+            var op = p[0];
+
+            if (op === "M" || op === "L" || op === "C") {
+                p = p.map(function (v, i) {
+                    if (i % 2 === 0 && i>0) {
+                        return parseFloat(v) + parseFloat(dy);
+                    }
+                    return v;
+                })
+            }
+            else if (op.match(/[mlcZz]/)) {
+            }
+            else {
+                console.log("Unknown operator " + p[0]);
+            }
+            return p;
+        }
+
+        PathList.to_relative = function(pl) {
+            var cursor = {};
+            var first;
+            if( pl[0][0] === "M" ){
+                first = pl.splice(0, 1);
+            }
+            else {
+                first = [["M",0,0]];
+            }
+
+            cursor.x = first[0][1];
+            cursor.y = first[0][2];
+
+            return first.concat(pl.map(
+                function (p) {
+                    return p_to_relative(cursor, p)
+                }));
+        };
+
+        function p_to_relative(cursor, p) {
+            var op = p[0];
+
+            if (op === "M" || op === "L") {
+                p = p.map(function (v, i) {
+                    if (i == 0) {
+                        return v.toLowerCase();
+                    }
+
+                    if (i % 2 === 1) {
+                        // X
+                        v = v - cursor.x;
+                        cursor.x = cursor.x + v;
+                    }
+                    else {
+                        // Y
+                        v = v - cursor.y;
+                        cursor.y = cursor.y + v;
+                    }
+                    return v;
+                })
+            }
+            else if (op === "C") {
+                p[0] = "c";
+                p[1] = p[1] - cursor.x;
+                p[2] = p[2] - cursor.y;
+                p[3] = p[3] - cursor.x;
+                p[4] = p[4] - cursor.y;
+                p[5] = p[5] - cursor.x;
+                p[6] = p[6] - cursor.y;
+                cursor.x = cursor.x + p[5];
+                cursor.y = cursor.y + p[6];
+            }
+            else if (op === "m" || op === "l" ) {
+                cursor.x = cursor.x + p[1];
+                cursor.y = cursor.y + p[2];
+            }
+            else if ( op === "c") {
+                cursor.x = cursor.x + p[5];
+                cursor.y = cursor.y + p[6];
+            }
+            else if (op.match(/[Zz]/)) {
+            }
+            else {
+                console.log("Unknown operator " + p[0]);
+            }
+            return p;
+        }
+
+        return PathList;
     });
-    return result;
-}

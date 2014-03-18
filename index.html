@@ -5,6 +5,11 @@
     <link rel="stylesheet" href="foundation.min.css">
     <script src="bower_components/angular/angular.min.js"></script>
     <script src="svg-path-fixup.js"></script>
+    <style>
+        .row {
+            min-width: 100% !important;
+        }
+    </style>
 </head>
 <body>
 <h1>SVG Path Fixup</h1>
@@ -13,13 +18,17 @@
         <div class="small-3 columns">
             <svg style="vertical-align: top;" xmlns="http://www.w3.org/2000/svg" version="1.1"
                  xmlns:xlink="http://www.w3.org/1999/xlink" width="500" height="500"
-                 viewBox="0 0 500 500">
+                 viewBox="0 0 500 550">
                 <symbol id="mysymbol" viewBox="0 0 50 50">
                     <path ng-attr-d="{{symbol.path}}"></path>
                 </symbol>
 
                 <rect x="0" y="0" width="50" height="50" style="fill: #777777"></rect>
                 <use x="0" y="0" width="50" height="50" xlink:href="#mysymbol"
+                     style="fill: #000000; stroke: #000000"></use>
+
+                <rect x="0" y="50" width="500" height="500" style="fill: #777777"></rect>
+                <use x="0" y="50" width="500" height="500" xlink:href="#mysymbol"
                      style="fill: #000000; stroke: #000000"></use>
             </svg>
         </div>
@@ -41,13 +50,13 @@
                 &nbsp;
                 </div>
                 <div class="small-1 columns">
-                    <button class="prefix" ng-click="x_dec()">-</button>
+                    <button class="prefix" ng-click="y_dec()">-</button>
                 </div>
                 <div class="small-3 columns">
-                    <input type="text" ng-model="dx">
+                    <input type="text" ng-model="dy">
                 </div>
                 <div class="small-1 columns">
-                    <button class="postfix" ng-click="x_inc()">+</button>
+                    <button class="postfix" ng-click="y_inc()">+</button>
                 </div>
             </div>
             Result: <span>{{symbol.path}}</span>

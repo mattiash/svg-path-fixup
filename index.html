@@ -36,6 +36,8 @@
             <textarea ng-model="symbol.pathexpr" cols="80" rows="20"></textarea>
             <button style="vertical-align: top;" ng-click="pretty()">Pretty</button>
             <button style="vertical-align: top;" ng-click="to_relative()">Relative</button>
+            <button style="vertical-align: top;" ng-click="to_absolute()">Absolute</button>
+            <button style="vertical-align: top;" ng-click="round()">Round</button>
             <div class="row collapse">
                 <div class="small-1 columns">
                 <button class="prefix" ng-click="x_dec()">-</button>
@@ -59,7 +61,18 @@
                     <button class="postfix" ng-click="y_inc()">+</button>
                 </div>
             </div>
-            Result: <span>{{symbol.path}}</span>
+            <div class="row collapse">
+                <div class="small-1 columns">
+                    <button class="prefix" ng-click="scale_down()">-</button>
+                </div>
+                <div class="small-3 columns">
+                    <input type="text" ng-model="scaleFactor">
+                </div>
+                <div class="small-1 columns">
+                    <button class="postfix" ng-click="scale_up()">+</button>
+                </div>
+            </div>
+                Result: <span>{{symbol.path}}</span>
         </div>
     </div>
 </div>

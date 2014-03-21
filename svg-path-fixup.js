@@ -50,6 +50,30 @@ angular.module("SvgPathFixup", [])
             $scope.symbol.pathexpr = PathList.d(new_pl);
         };
 
+        $scope.to_absolute = function () {
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.to_absolute(pl);
+            $scope.symbol.pathexpr = PathList.d(new_pl);
+        };
+
+        $scope.round = function () {
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.round(pl);
+            $scope.symbol.pathexpr = PathList.d(new_pl);
+        };
+
+        $scope.scale_up = function () {
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.scale(pl, parseFloat($scope.scaleFactor));
+            $scope.symbol.pathexpr = PathList.d(new_pl);
+        };
+
+        $scope.scale_down = function () {
+            var pl = PathList.parse($scope.symbol.pathexpr);
+            var new_pl = PathList.scale(pl, 1/parseFloat($scope.scaleFactor));
+            $scope.symbol.pathexpr = PathList.d(new_pl);
+        };
+
     })
     .service("PathList", function() {
         var PathList = {};
@@ -155,6 +179,42 @@ angular.module("SvgPathFixup", [])
             return p;
         }
 
+        PathList.scale = function (pl, factor) {
+            return pl.map(
+                function (p) {
+                    return p_scale(p, factor)
+                });
+        };
+
+        function p_scale(p, factor) {
+            var op = p[0];
+            p = p.map(function (v, i) {
+                    if (i > 0) {
+                        return v * factor;
+                    }
+                    return v;
+                });
+            return p;
+        }
+
+        PathList.round = function (pl) {
+            return pl.map(
+                function (p) {
+                    return p_round(p)
+                });
+        };
+
+        function p_round(p) {
+            var op = p[0];
+            p = p.map(function (v, i) {
+                if (i > 0) {
+                    return Math.round(1000*v)/1000;
+                }
+                return v;
+            });
+            return p;
+        }
+
         PathList.to_relative = function(pl) {
             var cursor = {};
             var first;
@@ -214,6 +274,74 @@ angular.module("SvgPathFixup", [])
             else if ( op === "c") {
                 cursor.x = cursor.x + p[5];
                 cursor.y = cursor.y + p[6];
+            }
+            else if (op.match(/[Zz]/)) {
+            }
+            else {
+                console.log("Unknown operator " + p[0]);
+            }
+            return p;
+        }
+
+        PathList.to_absolute = function(pl) {
+            var cursor = {};
+            var first;
+            if( pl[0][0] === "M" ){
+                first = pl.splice(0, 1);
+            }
+            else {
+                first = [["M",0,0]];
+            }
+
+            cursor.x = first[0][1];
+            cursor.y = first[0][2];
+
+            return first.concat(pl.map(
+                function (p) {
+                    return p_to_absolute(cursor, p)
+                }));
+        };
+
+        function p_to_absolute(cursor, p) {
+            var op = p[0];
+
+            if (op === "m" || op === "l") {
+                p = p.map(function (v, i) {
+                    if (i == 0) {
+                        return v.toUpperCase();
+                    }
+
+                    if (i % 2 === 1) {
+                        // X
+                        v = v + cursor.x;
+                        cursor.x = cursor.x + v;
+                    }
+                    else {
+                        // Y
+                        v = v + cursor.y;
+                        cursor.y = cursor.y + v;
+                    }
+                    return v;
+                })
+            }
+            else if (op === "c") {
+                p[0] = "C";
+                p[1] = p[1] + cursor.x;
+                p[2] = p[2] + cursor.y;
+                p[3] = p[3] + cursor.x;
+                p[4] = p[4] + cursor.y;
+                p[5] = p[5] + cursor.x;
+                p[6] = p[6] + cursor.y;
+                cursor.x = cursor.x - p[5];
+                cursor.y = cursor.y - p[6];
+            }
+            else if (op === "M" || op === "L" ) {
+                cursor.x = p[1];
+                cursor.y = p[2];
+            }
+            else if ( op === "C") {
+                cursor.x = p[5];
+                cursor.y = p[6];
             }
             else if (op.match(/[Zz]/)) {
             }

@@ -12,67 +12,107 @@
     </style>
 </head>
 <body>
-<h1>SVG Path Fixup</h1>
 <div ng-controller="Ctrl">
     <div class="row">
-        <div class="small-3 columns">
-            <svg style="vertical-align: top;" xmlns="http://www.w3.org/2000/svg" version="1.1"
-                 xmlns:xlink="http://www.w3.org/1999/xlink" width="500" height="500"
-                 viewBox="0 0 500 550">
-                <symbol id="mysymbol" viewBox="0 0 50 50">
-                    <path ng-attr-d="{{symbol.path}}"></path>
-                </symbol>
+        <h1>SVG Path Fixup</h1>
+    </div>
+    <div class="row">
+        <div class="large-6 columns">
+            <div>
+                <svg style="vertical-align: top;" xmlns="http://www.w3.org/2000/svg" version="1.1"
+                     xmlns:xlink="http://www.w3.org/1999/xlink" width="500" height="550"
+                     viewBox="0 0 500 550">
+                    <symbol id="mysymbol" viewBox="0 0 50 50">
+                        <path ng-attr-d="{{symbol.path}}"></path>
+                    </symbol>
 
-                <rect x="0" y="0" width="50" height="50" style="fill: #777777"></rect>
-                <use x="0" y="0" width="50" height="50" xlink:href="#mysymbol"
-                     style="fill: #000000; stroke: #000000"></use>
+                    <rect x="0" y="0" width="50" height="50" style="fill: #777777"></rect>
+                    <use x="0" y="0" width="50" height="50" xlink:href="#mysymbol"
+                         style="fill: #000000; stroke: #000000"></use>
 
-                <rect x="0" y="50" width="500" height="500" style="fill: #777777"></rect>
-                <use x="0" y="50" width="500" height="500" xlink:href="#mysymbol"
-                     style="fill: #000000; stroke: #000000"></use>
-            </svg>
+                    <rect x="0" y="50" width="500" height="500" style="fill: #777777"></rect>
+                    <use x="0" y="50" width="500" height="500" xlink:href="#mysymbol"
+                         style="fill: #000000; stroke: #000000"></use>
+                </svg>
+            </div>
+            <hr>
+            <div ng-show="showhelp" class="panel">
+                <p>
+                    Paste your SVG Path expression in the input box. Press "Pretty" to normalize the expression.
+                    Then use the Move and Scale buttons to center your path inside the grey boxes and make it fill
+                    the entire boxes.
+                </p>
+                <p>
+                    When you are happy with the result, copy the result from the Result section to your svg.
+                </p>
+                <dl>
+                    <dt>Tip 1</dt>
+                    <dd>If the path is distorted when you move it, add a "M 0 0" at the start of the path.</dd>
+                    <dt>Tip 2</dt>
+                    <dd>If the path is not visible at all, it may be positioned outside the 50 x 50 pixel boxes.
+                    Press "Relative" and then change the M command at the start of the path to "M 0 0".</dd>
+                    <dt>Tip 3</dt>
+                    <dd>If the path looks like it is missing a section, try to add a "Z" at the end of the path.</dd>
+                </dl>
+                </p>
+            </div>
+            <div>
+                <button ng-hide="showhelp" ng-click="showhelp = true">Help</button>
+                <button ng-show="showhelp" ng-click="showhelp = false">Hide Help</button>
+            </div>
         </div>
-        <div class="small-9 columns">
-            <textarea ng-model="symbol.pathexpr" cols="80" rows="20"></textarea>
+        <div class="large-6 columns">
+            <textarea ng-model="symbol.pathexpr" cols="20" rows="8"></textarea>
             <button style="vertical-align: top;" ng-click="pretty()">Pretty</button>
             <button style="vertical-align: top;" ng-click="to_relative()">Relative</button>
             <button style="vertical-align: top;" ng-click="to_absolute()">Absolute</button>
             <button style="vertical-align: top;" ng-click="round()">Round</button>
             <div class="row collapse">
-                <div class="small-1 columns">
-                <button class="prefix" ng-click="x_dec()">-</button>
-                </div>
-                <div class="small-3 columns">
-                    <input type="text" ng-model="dx">
-                </div>
-                <div class="small-1 columns">
-                    <button class="postfix" ng-click="x_inc()">+</button>
+                <div class="small-2 columns">
+                    <label class="left inline">Move X</label>
                 </div>
                 <div class="small-2 columns">
-                &nbsp;
+                    <button class="prefix" ng-click="x_dec()">-</button>
                 </div>
-                <div class="small-1 columns">
+                <div class="small-6 columns">
+                    <input type="text" ng-model="dx">
+                </div>
+                <div class="small-2 columns">
+                    <button class="postfix" ng-click="x_inc()">+</button>
+                </div>
+            </div>
+            <div class="row collapse">
+                <div class="small-2 columns">
+                    <label class="left inline">Move y</label>
+                </div>
+                <div class="small-2 columns">
                     <button class="prefix" ng-click="y_dec()">-</button>
                 </div>
-                <div class="small-3 columns">
+                <div class="small-6 columns">
                     <input type="text" ng-model="dy">
                 </div>
-                <div class="small-1 columns">
+                <div class="small-2 columns">
                     <button class="postfix" ng-click="y_inc()">+</button>
                 </div>
             </div>
             <div class="row collapse">
-                <div class="small-1 columns">
+                <div class="small-2 columns">
+                    <label class="left inline">Scale</label>
+                </div>
+                <div class="small-2 columns">
                     <button class="prefix" ng-click="scale_down()">-</button>
                 </div>
-                <div class="small-3 columns">
+                <div class="small-6 columns">
                     <input type="text" ng-model="scaleFactor">
                 </div>
-                <div class="small-1 columns">
+                <div class="small-2 columns">
                     <button class="postfix" ng-click="scale_up()">+</button>
                 </div>
             </div>
-                Result: <span>{{symbol.path}}</span>
+            <h4>Result</h4>
+            <div class="panel">
+                <pre style="white-space: pre-wrap">{{symbol.path}}</pre>
+            </div>
         </div>
     </div>
 </div>

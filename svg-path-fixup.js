@@ -10,6 +10,7 @@ angular.module("SvgPathFixup", [])
         };
         $scope.dx = 1;
         $scope.dy = 1;
+        $scope.scaleFactor = 1.02;
 
         $scope.$watch( 'symbol.pathexpr', function(newVal) {
             if(newVal)
